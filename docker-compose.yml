@@ -1,31 +1,26 @@
-version: '2'
+version: '2.1'
 services:
   chouette-postgres:
     build:
       context: postgres
       dockerfile: Dockerfile
-    image: afimb/chouette-postgres:latest
     ports: 
-     - "5433:5432"
+      - "5433:5432"
     environment:
-     -  POSTGRES_PASSWORD=chouette
-     -  POSTGRES_USER=chouette
+      -  POSTGRES_PASSWORD=chouette
+      -  POSTGRES_USER=chouette
     volumes:
-     - ./data/postgresql:/var/lib/postgresql/data
-  mailcatcher:
-    image: tophfr/mailcatcher:latest
-    ports:
-     - "1080:80"
-     - "1025:25"
-  redis:
+      - ./data/postgresql:/var/lib/postgresql/data
+  chouette-redis:
     image: redis
     ports:
-     - "6379:6379"
+      - "6380:6379"
+    volumes:
+      - ./data/redis:/data
   chouette-iev:
     build:
       context: iev
       dockerfile: Dockerfile
-    image: afimb/chouette-iev:latest
     ports:
      - "8081:8080"
      - "9991:9990"
@@ -33,33 +28,16 @@ services:
      - ./data/referentials:/opt/jboss/referentials
     links:
      - chouette-postgres:chouette-postgres
-  chouette2:
+  chouette-gui:
     build:
       context: chouette2
       dockerfile: Dockerfile
-    image: afimb/chouette2:latest
     ports:
-     - "3000:3000"
+      - "3000:3000"
     volumes:
-     - ./data/referentials:/home/chouette/referentials
-    environment:
-     - domain_name=localhost
-     - external_port=3000
-     - smtp_delivery_method=smtp
-     - smtp_host=smtp
-     - smtp_port=25
-     - smtp_domain=
-     - smtp_user_name=
-     - smtp_password=
-     - smtp_authentication=
-     - smtp_openssl_verify_mode=
-     - smtp_enable_starttls_auto=
-     - TZ=Europe/Paris
-     - google_api_key=
-     - REDIS_URL=redis://redis:6379
+      - ./data/referentials:/home/chouette/referentials
+      - ./data/logs:/home/chouette/chouette2/log
     links:
-     - mailcatcher:smtp
-     - chouette-iev:chouette-iev
-     - chouette-postgres:chouette-postgres
-     - redis:redis
-
+      - chouette-iev:chouette-iev
+      - chouette-postgres:chouette-postgres
+      - chouette-redis:chouette-redis

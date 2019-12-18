@@ -1,5 +1,5 @@
 FROM mdillon/postgis:9.4
-MAINTAINER Cityway
+MAINTAINER Cityway & ATNOS
 
 LABEL Description="Chouette DB" \
       Usage="docker run --name chouette-postgres -p 5433:5432 -e POSTGRES_USER=chouette -e POSTGRES_PASSWORD=chouette -d chouette-postgres" \

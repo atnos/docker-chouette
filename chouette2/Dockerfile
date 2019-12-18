@@ -1,47 +1,41 @@
-FROM centos:6.6
-MAINTAINER Cityway
-
-ENV GIT_BRANCH V3_4
-ENV RUBY_VERSION 2.3.3
+FROM ruby:2.3
 
 LABEL Description="Chouette GUI" \
-      Usage="docker run -it --name chouette2 --link chouette-postgres:chouette-postgres --link smtp:smtp --link redis:redis --link chouette-iev:chouette-iev -p 3000:3000 -d chouette2" \
-      BuildUsage="docker build -t chouette2 ." \
+      Usage="docker run -it --name chouette2 --link chouette-postgres:chouette-postgres --link chouette-redis:chouette-redis --link chouette-iev:chouette-iev -p 3000:3000 -d chouette-gui" \
+      BuildUsage="docker build -t chouette-gui ." \
       License="CECILL/B" \
-      Version="3.0"
+      Version="4.0.0"
 
-RUN yum -y install yum-plugin-ovl
-RUN yum -y install epel-release && yum -y update 
-RUN yum -y localinstall https://download.postgresql.org/pub/repos/yum/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-2.noarch.rpm
-RUN yum -y install which tar git postgresql94-devel proj proj-devel geos-devel nmap bzip2 zlib zlib-devel gcc-c++ patch readline readline-devel libyaml-devel libffi-devel openssl-devel make autoconf automake libtool bison curl sqlite-devel
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales nmap libproj-dev vim libpq-dev git unzip libgeos-dev proj-bin make
 
-#-- Add user chouette
-RUN adduser chouette
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
+
+ENV LANG en_US.UTF-8
+
+RUN useradd -ms /bin/bash chouette
 
 USER chouette
 
-RUN mkdir ~/chouette-gui && \
-    git clone https://github.com/rbenv/rbenv.git ~/.rbenv && \
-    echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile && \
-    echo 'eval "$(rbenv init -)"' >> ~/.bash_profile && \
-    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build && \
-    source ~/.bash_profile && \
-    type rbenv && \
-    rbenv install $RUBY_VERSION && rbenv global $RUBY_VERSION && \
-    gem install bundler && bundle config build.pg --with-pg-config=/usr/pgsql-9.4/bin/pg_config && \
-    git clone -b $GIT_BRANCH git://github.com/afimb/chouette2 ~/chouette-gui/ && \
-    cd ~/chouette-gui && bundle install && \
-    mkdir /home/chouette/bin
+RUN cd /home/chouette/ && git clone https://github.com/atnos/chouette2.git && cd chouette2 && bundle install --without development test
 
-#-- Configure Chouette2
-COPY config/chouette.sh /home/chouette/bin
-COPY config/chouette.conf /home/chouette/bin
-COPY config/application.yml /home/chouette/chouette-gui/config/
-COPY config/smtp_settings.rb /home/chouette/chouette-gui/config/initializers/
-COPY config/database.yml /home/chouette/chouette-gui/config
+RUN mkdir /home/chouette/bin
+COPY config/chouette.sh /home/chouette/bin/
+COPY config/docker-entrypoint.sh /home/chouette/bin/
+COPY config/database.yml /home/chouette/chouette2/config/
+COPY config/smtp_settings.rb /home/chouette/chouette2/config/initializers/
+COPY config/env /home/chouette/chouette2/.env
+
+USER root
+
+RUN chmod 777 /home/chouette/bin/chouette.sh
+RUN chmod 777 /home/chouette/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 
-COPY config/docker-entrypoint.sh /
+USER chouette
+
 VOLUME ["/home/chouette/referentials"]
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/home/chouette/bin/docker-entrypoint.sh"]
+# ENTRYPOINT ["bin/bash"]

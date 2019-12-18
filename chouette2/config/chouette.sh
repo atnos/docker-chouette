@@ -2,13 +2,11 @@
 
 CHOUETTE_HOME=`dirname $0`/..
 source $CHOUETTE_HOME/.bashrc
-source $CHOUETTE_HOME/bin/chouette.conf
-source $CHOUETTE_HOME/.bash_profile
+source $CHOUETTE_HOME/.profile
 
-cd $CHOUETTE_HOME/chouette-gui/
+cd $CHOUETTE_HOME/chouette2/
 
-echo "RAILS_ENV=$RAILS_ENV"
-export RAILS_ENV=${RAILS_ENV:-production}
+export RAILS_ENV=production
 
 echo "Remove old PID file..."
 rm -f tmp/pids/server.pid
@@ -18,6 +16,8 @@ bin/rake db:gis:setup
 
 echo "Chouette migrate..."
 bin/rake db:migrate
+
+bin/rake assets:precompile
 
 echo "Chouette Ruby starting..."
 bin/rails s -b 0.0.0.0 -p 3000

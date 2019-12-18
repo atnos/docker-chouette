@@ -17,7 +17,8 @@ function initWildfly {
 	waitWildfly
 	/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --file=/tmp/wildfly-datasources.cli
 	/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="/:reload"
-	/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="deploy /tmp/chouette.ear"
+	cd /tmp/chouette && mvn -DskipTests install
+	# /opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="deploy /tmp/chouette.ear"
 	touch $INIT_FILE
 }
 
@@ -28,10 +29,10 @@ function waitPostgres {
     echo 'Waiting for Postgres...'
     sleep 2
   done
-  exec $@
+  exec "$@"
 }
 
 [ ! -e $INIT_FILE ] && initWildfly &
 
-waitPostgres $@
+waitPostgres "$@"
 
