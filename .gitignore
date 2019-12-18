@@ -1,6 +1,7 @@
 .DS_Store
 .idea/
 !.keep
+chouette2/config/env
 data/postgresql/*
 data/referentials/*
 data/redis/*
