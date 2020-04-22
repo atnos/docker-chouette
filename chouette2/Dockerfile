@@ -6,7 +6,7 @@ LABEL Description="Chouette GUI" \
       License="CECILL/B" \
       Version="4.0.0"
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales nmap libproj-dev vim libpq-dev git unzip libgeos-dev proj-bin make
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales nmap libproj-dev vim libpq-dev git unzip libgeos-dev proj-bin make apt-utils
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \

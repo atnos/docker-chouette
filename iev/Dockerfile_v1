@@ -1,0 +1,42 @@
+FROM jboss/wildfly:9.0.2.Final
+MAINTAINER Cityway
+
+ENV IEV_VERSION 3.4.5
+
+LABEL Description="Chouette IEV" \
+      Usage="docker run -it --name chouette-iev --link chouette-postgres:chouette-postgres -p 9991:9990 -p 8081:8080 -d chouette-iev" \
+      BuildUsage="docker build -t chouette-iev ." \
+      License="CECILL/B" \
+      Version="3.0"
+
+USER root
+
+RUN yum -y install wget nmap vim maven git
+
+USER jboss
+
+RUN /opt/jboss/wildfly/bin/add-user.sh admin admin --silent
+
+RUN wget -q http://www.hibernatespatial.org/repository/org/hibernate/hibernate-spatial/4.3-SNAPSHOT/hibernate-spatial-4.3-20140213.224750-4.jar -O /tmp/hibernate-spatial.jar && \
+    wget -q https://repo1.maven.org/maven2/com/vividsolutions/jts/1.13/jts-1.13.jar -P /tmp && \
+    wget -q https://jdbc.postgresql.org/download/postgresql-42.2.11.jar -O /tmp/postgresql.jar && \
+    wget -q https://repo1.maven.org/maven2/net/postgis/postgis-jdbc/2.4.0/postgis-jdbc-2.4.0.jar -O /tmp/postgis.jar
+
+RUN cp /tmp/hibernate-spatial.jar /tmp/jts-*.jar /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/
+RUN cp /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/module.xml /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/module.xml.sav
+RUN sed -i '/<resources>/a\\t<resource-root path="hibernate-spatial.jar"/>'  /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/module.xml
+RUN sed -i '/<resources>/a\\t<resource-root path="jts-1.13.jar"/>'  /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/module.xml
+RUN sed -i '/<dependencies>/a\\t<module name="org.postgres"/>'  /opt/jboss/wildfly/modules/system/layers/base/org/hibernate/main/module.xml
+
+RUN cd /tmp && git clone https://github.com/atnos/chouette.git
+RUN cd /tmp/chouette && git checkout V3_4
+
+EXPOSE 8080 9990
+
+COPY config/wildfly-datasources.cli /tmp/
+COPY config/docker-entrypoint.sh /
+VOLUME ["/opt/jboss/referentials"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+# CMD ["/bin/bash"]
+CMD [ "/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0", "-bmanagement", "0.0.0.0"]
+

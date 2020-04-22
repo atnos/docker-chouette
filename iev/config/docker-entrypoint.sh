@@ -5,7 +5,7 @@ INIT_FILE="/opt/jboss/initialized.done"
 function waitWildfly {
 	status=""
 	while [ "$status" != "running" ];do
-		status=$(/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --commands="read-attribute server-state")
+		status=$(/opt/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --commands="read-attribute server-state")
 		if [ "$status" != "running" ]; then
 			echo "Waiting for Wildfly..."
 			sleep 1
@@ -15,10 +15,10 @@ function waitWildfly {
 
 function initWildfly {
 	waitWildfly
-	/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --file=/tmp/wildfly-datasources.cli
-	/opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="/:reload"
-	cd /tmp/chouette && mvn -DskipTests install
-	# /opt/jboss/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="deploy /tmp/chouette.ear"
+	/opt/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --file=/tmp/wildfly-datasources.cli
+	/opt/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="/:reload"
+	# cd /tmp/chouette && mvn -DskipTests install
+	/opt/wildfly/bin/jboss-cli.sh -c --user=admin --password=admin --command="deploy /tmp/chouette.ear"
 	touch $INIT_FILE
 }
 
